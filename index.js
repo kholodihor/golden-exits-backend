@@ -7,6 +7,7 @@ import { corsOptions } from './config/corsOptions.js';
 
 import videoRoute from './routes/video.js';
 import postRoute from './routes/posts.js';
+import newsRoute from './routes/news.js';
 import commentRoute from './routes/comments.js';
 import authRoute from './routes/auth.js';
 import uploadRoute from './routes/uploads.js';
@@ -29,6 +30,7 @@ app.use('/uploads', express.static('uploads'));
 app.use(authRoute);
 app.use(videoRoute);
 app.use(postRoute);
+app.use(newsRoute);
 app.use(commentRoute);
 app.use(uploadRoute);
 app.use(productRoute);
