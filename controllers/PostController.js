@@ -42,12 +42,9 @@ export const getOne = async (req, res) => {
   try {
     const postId = req.params.id;
 
-    PostModel.findOneAndUpdate(
+    PostModel.findOne(
       {
         _id: postId,
-      },
-      {
-        returnDocument: 'after',
       },
       (err, doc) => {
         if (err) {
@@ -181,15 +178,3 @@ export const getPostComments = async (req, res) => {
     res.status(404).json({ message: 'Something went wrong...' });
   }
 };
-
-// export const getAll = async (req, res) => {
-//   try {
-//     const posts = await PostModel.find().populate('user').exec();
-//     res.status(200).json(posts);
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json({
-//       message: 'Can`t get a post',
-//     });
-//   }
-// };

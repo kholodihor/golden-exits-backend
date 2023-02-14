@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
-import { corsOptions } from './config/corsOptions.js';
 
 import videoRoute from './routes/video.js';
 import postRoute from './routes/posts.js';
@@ -23,7 +22,7 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(cors(corsOptions));
+app.use(cors({ origin: '*' }));
 
 app.use('/uploads', express.static('uploads'));
 
