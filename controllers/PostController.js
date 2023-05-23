@@ -1,10 +1,9 @@
 import PostModel from '../models/PostModel.js';
 import CommentModel from '../models/CommentModel.js';
 
-//createPost
 export const create = async (req, res) => {
   try {
-    const doc = new PostModel({
+    const post = new PostModel({
       title: req.body.title,
       text: req.body.text,
       imageUrl: req.body.imageUrl,
@@ -12,9 +11,7 @@ export const create = async (req, res) => {
       likes: {},
       user: req.userId,
     });
-
-    const post = await doc.save();
-
+    await post.save();
     res.status(200).json(post);
   } catch (err) {
     console.log(err);
@@ -24,7 +21,6 @@ export const create = async (req, res) => {
   }
 };
 
-//getAllPosts
 export const getAll = async (req, res) => {
   try {
     const posts = await PostModel.find().populate('user').exec();
@@ -37,7 +33,6 @@ export const getAll = async (req, res) => {
   }
 };
 
-//getOnePost
 export const getOne = async (req, res) => {
   try {
     const postId = req.params.id;
@@ -71,7 +66,6 @@ export const getOne = async (req, res) => {
   }
 };
 
-//removePost
 export const remove = async (req, res) => {
   try {
     const postId = req.params.id;
@@ -107,7 +101,6 @@ export const remove = async (req, res) => {
   }
 };
 
-//updatePost
 export const update = async (req, res) => {
   try {
     const postId = req.params.id;
@@ -136,7 +129,6 @@ export const update = async (req, res) => {
   }
 };
 
-//likePost
 export const likePost = async (req, res) => {
   try {
     const postId = req.params.id;
@@ -164,7 +156,6 @@ export const likePost = async (req, res) => {
   }
 };
 
-//getComments
 export const getPostComments = async (req, res) => {
   try {
     const post = await PostModel.findById(req.params.id);

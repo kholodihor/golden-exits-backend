@@ -18,7 +18,6 @@ export const createComment = async (req, res) => {
     } catch (error) {
       console.log(error);
     }
-
     res.json(newComment);
   } catch (error) {
     res.status(500).json({

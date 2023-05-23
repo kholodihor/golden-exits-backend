@@ -8,14 +8,13 @@ export const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
-    const doc = new UserModel({
+    const user = new UserModel({
       email: req.body.email,
       username: req.body.username,
       avatarUrl: req.body.avatarUrl,
       passwordHash: hash,
     });
-
-    const user = await doc.save();
+    await user.save();
 
     const token = jwt.sign(
       {
@@ -95,9 +94,7 @@ export const getUser = async (req, res) => {
         message: 'User not found',
       });
     }
-
     const { passwordHash, ...userData } = user._doc;
-
     res.json(userData);
   } catch (err) {
     console.log(err);

@@ -1,10 +1,9 @@
 import ProductModel from '../models/ProductModel.js';
 
-//createProduct
-export const create = async (req, res) => {
+export const createProduct = async (req, res) => {
   try {
-    const doc = new ProductModel(req.body);
-    const product = await doc.save();
+    const product = new ProductModel(req.body);
+    await product.save();
     res.json(product);
   } catch (err) {
     console.log(err);
@@ -14,7 +13,6 @@ export const create = async (req, res) => {
   }
 };
 
-//getProduct
 export const getProduct = async (req, res) => {
   try {
     const product = await ProductModel.findById(req.params.id);
@@ -24,7 +22,6 @@ export const getProduct = async (req, res) => {
   }
 };
 
-//getAllProducts
 export const getAllProducts = async (req, res) => {
   try {
     const products = await ProductModel.find();

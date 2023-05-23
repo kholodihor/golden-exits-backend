@@ -3,7 +3,7 @@ const router = new Router();
 
 import { VideoController } from '../controllers/index.js';
 
-import { checkAuth } from '../utils/index.js';
+import { checkAuth } from '../utils/checkAuth.js';
 
 router.post('/videos', checkAuth, VideoController.uploadVideo);
 router.patch('/videos/:id', VideoController.updateViews);

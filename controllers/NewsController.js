@@ -23,7 +23,7 @@ export const getNews = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: 'Can`t getnews',
+      message: 'Can`t get news',
     });
   }
 };

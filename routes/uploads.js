@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import fs from 'fs';
 import multer from 'multer';
-import { checkAuth } from '../utils/index.js';
+import { checkAuth } from '../utils/checkAuth.js';
 
 const router = new Router();
 

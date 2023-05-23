@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-export default (req, res, next) => {
+export const checkAuth = (req, res, next) => {
   const token = (req.headers.authorization || '').replace(/Bearer\s?/, '');
 
   if (token) {
@@ -8,14 +8,15 @@ export default (req, res, next) => {
       const decoded = jwt.verify(token, 'secret123');
       req.userId = decoded._id;
       next();
-    } catch (e) {
+    } catch (error) {
       return res.status(403).json({
-        message: 'Access denied',
+        message: error.message,
       });
     }
   } else {
     return res.status(403).json({
-      message: 'Access denied',
+      message: 'You`re not Authorized',
     });
   }
 };
+
