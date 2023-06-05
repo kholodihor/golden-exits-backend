@@ -2,25 +2,24 @@ import VideoModel from '../models/VideoModel.js';
 
 export const uploadVideo = async (req, res) => {
   try {
-    const doc = new VideoModel(req.body);
-    const video = await doc.save();
-    res.json(video);
+    const video = new VideoModel(req.body);
+    const savedVideo = await video.save();
+    res.json(savedVideo);
   } catch (error) {
     console.log(error.message);
     res.status(500).json({
-      message: 'Fail to create a videovideo',
+      message: 'Fail to create a video',
     });
   }
 };
-
 export const getVideos = async (req, res) => {
   try {
     const videos = await VideoModel.find().populate('user').exec();
     res.json(videos);
-  } catch (err) {
-    console.log(err);
+  } catch (error) {
+    console.log(error.message);
     res.status(500).json({
-      message: 'Can`t get videovideos',
+      message: 'Can`t get videos',
     });
   }
 };

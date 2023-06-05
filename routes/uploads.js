@@ -1,35 +1,36 @@
 import { Router } from 'express';
-import fs from 'fs';
-import multer from 'multer';
 import { checkAuth } from '../utils/checkAuth.js';
+import cloudinary from '../libs/cloudinary.js';
 
 const router = new Router();
 
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => {
-    if (!fs.existsSync('uploads')) {
-      fs.mkdirSync('uploads');
-    }
-    cb(null, 'uploads');
-  },
-  filename: (_, file, cb) => {
-    cb(null, file.originalname);
-  },
+router.post('/upload', checkAuth, async (req, res) => {
+  const { image } = req.body;
+  try {
+    const result = await cloudinary.uploader.upload(image, {
+      folder: 'posts',
+    });
+    res.json({
+      url: result.secure_url,
+    });
+  } catch (error) {
+    console.error(error);
+  }
 });
 
-const upload = multer({ storage });
-
-router.post('/upload', checkAuth, upload.single('image'), (req, res) => {
-  res.json({
-    url: `/uploads/${req.file.originalname}`,
-  });
-});
-
-router.post('/uploadvideo', upload.single('file'), (req, res) => {
-  res.json({
-    url: `/uploads/${req.file.originalname}`,
-    fileName: req.file.originalname,
-  });
+router.post('/uploadvideo', async (req, res) => {
+  const { video } = req.body;
+  try {
+    const result = await cloudinary.uploader.upload(video, {
+      resource_type: 'video',
+      folder: 'videos',
+    });
+    res.json({
+      url: result.secure_url,
+    });
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 export default router;
