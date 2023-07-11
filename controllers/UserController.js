@@ -1,41 +1,41 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import UserModel from '../models/UserModel.js';
+import { generateToken } from '../utils/generateToken.js';
 
 export const register = async (req, res) => {
+  const { password, email, username, avatarUrl } = req.body;
   try {
-    const password = req.body.password;
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
 
     const user = new UserModel({
-      email: req.body.email,
-      username: req.body.username,
-      avatarUrl: req.body.avatarUrl,
+      email,
+      username,
+      avatarUrl,
       passwordHash: hash,
     });
+
     await user.save();
 
-    const token = jwt.sign(
-      {
+    if (user) {
+      const token = generateToken(user._id);
+
+      res.status(200).json({
         _id: user._id,
-      },
-      'secret123',
-      {
-        expiresIn: '30d',
-      }
-    );
-
-    const { passwordHash, ...userData } = user._doc;
-
-    res.json({
-      ...userData,
-      token,
-    });
+        username: user.username,
+        email: user.email,
+        token,
+      });
+    } else {
+      return res.status(400).json({
+        message: 'Fail to create user',
+      });
+    }
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: err.message,
+      message: 'Fail to Register'
     });
   }
 };
@@ -44,39 +44,25 @@ export const login = async (req, res) => {
   try {
     const user = await UserModel.findOne({ email: req.body.email });
 
-    if (!user) {
-      return res.status(404).json({
-        message: 'User not found',
-      });
-    }
-
     const isValidPass = await bcrypt.compare(
       req.body.password,
       user._doc.passwordHash
     );
 
-    if (!isValidPass) {
+    if (user && isValidPass) {
+      const token = generateToken(user._id);
+
+      res.status(200).json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        token,
+      });
+    } else {
       return res.status(400).json({
-        message: 'Incorrect login or password',
+        message: 'Invalid login or password',
       });
     }
-
-    const token = jwt.sign(
-      {
-        _id: user._id,
-      },
-      'secret123',
-      {
-        expiresIn: '30d',
-      }
-    );
-
-    const { passwordHash, ...userData } = user._doc;
-
-    res.json({
-      ...userData,
-      token,
-    });
   } catch (err) {
     console.log(err);
     res.status(500).json({
@@ -89,13 +75,18 @@ export const getUser = async (req, res) => {
   try {
     const user = await UserModel.findById(req.userId);
 
-    if (!user) {
+    if (user) {
+      res.status(200).json({
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        avatarUrl: user.avatarUrl
+      });
+    } else {
       return res.status(404).json({
         message: 'User not found',
       });
     }
-    const { passwordHash, ...userData } = user._doc;
-    res.json(userData);
   } catch (err) {
     console.log(err);
     res.status(500).json({

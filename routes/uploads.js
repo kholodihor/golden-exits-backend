@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { checkAuth } from '../utils/checkAuth.js';
+import { checkAuth } from '../middleware/checkAuth.js';
 import cloudinary from '../libs/cloudinary.js';
 
 const router = new Router();

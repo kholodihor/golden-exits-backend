@@ -33,6 +33,7 @@ app.use(uploadRoute);
 app.use(productRoute);
 app.use(stripeRoute);
 
+
 mongoose
   .connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,

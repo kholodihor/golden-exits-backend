@@ -1,7 +1,7 @@
 import { Router } from 'express';
 const router = new Router();
 
-import { checkAuth } from '../utils/checkAuth.js';
+import { checkAuth } from '../middleware/checkAuth.js';
 
 import { PostController } from '../controllers/index.js';
 
