@@ -31,7 +31,7 @@ app.use(
 );
 
 app.get("/", (c) => {
-  return c.text(process.env.MONGODB_URL!);
+  return c.text("I`m alive!!!");
 });
 
 app.route("api/", authRoutes);
