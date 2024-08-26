@@ -1,5 +1,6 @@
 {
   "name": "golden-exits-backend",
+  "type": "module",
   "scripts": {
     "start": "tsx watch src/index.ts",
     "build": "tsc",
