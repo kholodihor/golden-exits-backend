@@ -9,37 +9,47 @@ export const getUsers = async (c: Context) => {
 };
 
 export const register = async (c: Context) => {
-  const { name, email, password } = await c.req.json();
+  const { username, email, password, avatarUrl } = await c.req.json();
 
-  const userExists = await UserModel.findOne({ email });
-  if (userExists) {
-    c.status(400);
-    throw new Error("User already exists");
+  try {
+    const userExists = await UserModel.findOne({ email });
+    if (userExists) {
+      c.status(400);
+      throw new Error("User already exists");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+
+    const user = await UserModel.create({
+      username,
+      email,
+      avatarUrl,
+      passwordHash: hash,
+    });
+
+    if (!user) {
+      c.status(400);
+      throw new Error("Invalid user data");
+    }
+
+    const token = await genToken(user._id.toString());
+
+    return c.json({
+      success: true,
+      data: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+      token,
+      message: "User created successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    c.status(500);
+    throw new Error("Failed to create user");
   }
-
-  const user = await UserModel.create({
-    name,
-    email,
-    password,
-  });
-
-  if (!user) {
-    c.status(400);
-    throw new Error("Invalid user data");
-  }
-
-  const token = await genToken(user._id.toString());
-
-  return c.json({
-    success: true,
-    data: {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-    },
-    token,
-    message: "User created successfully",
-  });
 };
 
 export const login = async (c: Context) => {
@@ -56,7 +66,7 @@ export const login = async (c: Context) => {
     throw new Error("No user found with this email");
   }
 
-  const isValidPass = await bcrypt.compare(password, user.password);
+  const isValidPass = await bcrypt.compare(password, user.passwordHash);
 
   if (!isValidPass) {
     c.status(401);
@@ -79,7 +89,7 @@ export const login = async (c: Context) => {
 
 export const getUser = async (c: Context) => {
   try {
-    const userId = c.req.param("id");
+    const userId = c.get("userId");
     const user = await UserModel.findById(userId);
 
     if (user) {

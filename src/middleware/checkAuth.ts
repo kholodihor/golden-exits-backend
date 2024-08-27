@@ -8,11 +8,7 @@ dotenv.config();
 // Protect Route for Authenticated Users
 export const checkAuth = async (c: Context, next: Next) => {
   let token;
-
-  if (
-    c.req.header("Authorization") &&
-    c.req.header("Authorization")?.startsWith("Bearer")
-  ) {
+  if (c.req.header("Authorization")) {
     try {
       token = c.req.header("Authorization")?.replace(/Bearer\s+/i, "");
       if (!token) {
