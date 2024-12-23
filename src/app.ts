@@ -39,14 +39,14 @@ app.get("/", (c) => {
 });
 
 // Fix: Add leading slash to API routes
-app.route("/api", authRoutes);
-app.route("/api", commentsRoutes);
-app.route("/api", newsRoutes);
-app.route("/api", postRoutes);
-app.route("/api", productRoutes);
-app.route("/api", stripeRoutes);
-app.route("/api", uploadsRoutes);
-app.route("/api", videoRoutes);
+app.route("/api/", authRoutes);
+app.route("/api/", commentsRoutes);
+app.route("/api/", newsRoutes);
+app.route("/api/", postRoutes);
+app.route("/api/", productRoutes);
+app.route("/api/", stripeRoutes);
+app.route("/api/", uploadsRoutes);
+app.route("/api/", videoRoutes);
 
 app.onError((err, c) => {
   const error = errorHandler(c);
