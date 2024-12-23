@@ -27,6 +27,10 @@ app.use(
   cors({
     origin: "*",
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    exposeHeaders: ["Content-Length", "X-Requested-With"],
+    credentials: true,
+    maxAge: 3600,
   })
 );
 
@@ -34,14 +38,15 @@ app.get("/", (c) => {
   return c.text("I`m alive!!!");
 });
 
-app.route("api/", authRoutes);
-app.route("api/", commentsRoutes);
-app.route("api/", newsRoutes);
-app.route("api/", postRoutes);
-app.route("api/", productRoutes);
-app.route("api/", stripeRoutes);
-app.route("api/", uploadsRoutes);
-app.route("api/", videoRoutes);
+// Fix: Add leading slash to API routes
+app.route("/api", authRoutes);
+app.route("/api", commentsRoutes);
+app.route("/api", newsRoutes);
+app.route("/api", postRoutes);
+app.route("/api", productRoutes);
+app.route("/api", stripeRoutes);
+app.route("/api", uploadsRoutes);
+app.route("/api", videoRoutes);
 
 app.onError((err, c) => {
   const error = errorHandler(c);
