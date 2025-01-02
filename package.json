@@ -2,8 +2,10 @@
   "name": "golden-exits-backend",
   "type": "module",
   "scripts": {
-    "start": "tsx watch src/index.ts",
+    "start": "node build/index.js",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "postinstall": "tsc",
     "vercel-build": "tsc && cp src/index.ts build/index.ts"
   },
   "dependencies": {
