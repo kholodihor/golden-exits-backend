@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { IComment } from "./comment.model";
+
+import type { IComment } from "./comment.model";
 
 export interface IPost {
   title: string;
@@ -43,7 +44,7 @@ const PostSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export default mongoose.model<IPost>("Post", PostSchema);

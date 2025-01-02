@@ -1,6 +1,9 @@
-import { Context, Hono } from "hono";
-import { checkAuth } from "../middleware/checkAuth";
+import type { Context } from "hono";
+
+import { Hono } from "hono";
+
 import cloudinary from "../libs/cloudinary";
+import { checkAuth } from "../middleware/checkAuth";
 
 export const uploadsRoutes = new Hono()
   .post("/upload", checkAuth, async (c: Context) => {
@@ -12,7 +15,8 @@ export const uploadsRoutes = new Hono()
       return c.json({
         url: result.secure_url,
       });
-    } catch (err) {
+    }
+    catch (err) {
       console.log(err);
       c.status(500);
       throw new Error("Failed to upload");
@@ -29,7 +33,8 @@ export const uploadsRoutes = new Hono()
       return c.json({
         url: result.secure_url,
       });
-    } catch (err) {
+    }
+    catch (err) {
       console.log(err);
       c.status(500);
       throw new Error("Failed to upload");

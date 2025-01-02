@@ -1,14 +1,16 @@
-import { Context } from "hono";
-import bcrypt from "bcryptjs";
-import { genToken } from "../utils/genToken";
-import UserModel from "../models/user.model";
+import type { Context } from "hono";
 
-export const getUsers = async (c: Context) => {
+import bcrypt from "bcryptjs";
+
+import UserModel from "../models/user.model";
+import { genToken } from "../utils/genToken";
+
+export async function getUsers(c: Context) {
   const users = await UserModel.find();
   return c.json({ users });
-};
+}
 
-export const register = async (c: Context) => {
+export async function register(c: Context) {
   const { username, email, password, avatarUrl } = await c.req.json();
 
   try {
@@ -45,14 +47,15 @@ export const register = async (c: Context) => {
       token,
       message: "User created successfully",
     });
-  } catch (error) {
+  }
+  catch (error) {
     console.log(error);
     c.status(500);
     throw new Error("Failed to create user");
   }
-};
+}
 
-export const login = async (c: Context) => {
+export async function login(c: Context) {
   const { email, password } = await c.req.json();
 
   if (!email || !password) {
@@ -71,7 +74,8 @@ export const login = async (c: Context) => {
   if (!isValidPass) {
     c.status(401);
     throw new Error("Invalid credentials");
-  } else {
+  }
+  else {
     const token = await genToken(user._id.toString());
 
     return c.json({
@@ -85,9 +89,9 @@ export const login = async (c: Context) => {
       message: "User logged in successfully",
     });
   }
-};
+}
 
-export const getUser = async (c: Context) => {
+export async function getUser(c: Context) {
   try {
     const userId = c.get("userId");
     const user = await UserModel.findById(userId);
@@ -100,13 +104,15 @@ export const getUser = async (c: Context) => {
         email: user.email,
         avatarUrl: user.avatarUrl,
       });
-    } else {
+    }
+    else {
       c.status(400);
       throw new Error("User not found");
     }
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Failed to get user");
   }
-};
+}

@@ -1,33 +1,36 @@
-import { Context } from "hono";
+import type { Context } from "hono";
+
 import VideoModel from "../models/video.model";
 import { createVideoSchema } from "../schema";
 
-export const uploadVideo = async (c: Context) => {
+export async function uploadVideo(c: Context) {
   const data = await c.req.json();
   try {
     const video = createVideoSchema.parse(data);
     const newVideo = new VideoModel(video);
     await newVideo.save();
     return c.json(newVideo);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Failed to create post");
   }
-};
+}
 
-export const getVideos = async (c: Context) => {
+export async function getVideos(c: Context) {
   try {
     const videos = await VideoModel.find().populate("user").exec();
     return c.json(videos);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Failed to get videos");
   }
-};
+}
 
-export const updateViews = async (c: Context) => {
+export async function updateViews(c: Context) {
   try {
     const { views } = await c.req.json();
     const videoId = c.req.param("id");
@@ -37,18 +40,19 @@ export const updateViews = async (c: Context) => {
       },
       {
         views,
-      }
+      },
     );
     c.status(200);
     return c.json({ success: true });
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Failed to update views");
   }
-};
+}
 
-export const likeVideo = async (c: Context) => {
+export async function likeVideo(c: Context) {
   try {
     const videoId = c.req.param("id");
     const { userId } = await c.req.json();
@@ -58,7 +62,8 @@ export const likeVideo = async (c: Context) => {
 
       if (isLiked) {
         video.likes.delete(userId);
-      } else {
+      }
+      else {
         video.likes.set(userId, true);
       }
 
@@ -67,18 +72,20 @@ export const likeVideo = async (c: Context) => {
           _id: videoId,
         },
         { likes: video.likes },
-        { new: true }
+        { new: true },
       );
 
       c.status(200);
       return c.json({ success: true });
-    } else {
+    }
+    else {
       c.status(404);
       return c.json({ message: "Video not found", success: false });
     }
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Failed to update likes");
   }
-};
+}

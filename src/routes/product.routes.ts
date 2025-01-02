@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+
 import { ProductController } from "../controllers/index.js";
 
 export const productRoutes = new Hono()

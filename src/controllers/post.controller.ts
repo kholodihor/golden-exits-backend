@@ -1,9 +1,10 @@
-import { Context } from "hono";
-import { createPostSchema, updatePostSchema } from "../schema";
-import PostModel, { IPost } from "../models/post.model";
-import CommentModel from "../models/comment.model";
+import type { Context } from "hono";
 
-export const create = async (c: Context) => {
+import CommentModel from "../models/comment.model";
+import PostModel from "../models/post.model";
+import { createPostSchema, updatePostSchema } from "../schema";
+
+export async function create(c: Context) {
   const data = await c.req.json();
   try {
     const post = createPostSchema.parse(data);
@@ -17,51 +18,54 @@ export const create = async (c: Context) => {
     });
     await newPost.save();
     return c.json(newPost.toJSON());
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Failed to create post");
   }
-};
+}
 
-export const getAllPosts = async (c: Context) => {
+export async function getAllPosts(c: Context) {
   try {
     const posts = await PostModel.find()
       .populate("user", "-passwordHash")
       .lean()
       .exec();
     return c.json(posts);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Can't get posts");
   }
-};
+}
 
-export const getOne = async (c: Context) => {
+export async function getOne(c: Context) {
   try {
     const postId = c.req.param("id");
     const post = await PostModel.findOne({ _id: postId })
       .populate("user", "-passwordHash")
       .lean()
       .exec();
-    
+
     if (!post) {
       c.status(404);
       throw new Error(`Post not found with id ${postId}`);
     }
 
     return c.json(post);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     if (c.res.status !== 404) {
       c.status(500);
     }
     throw new Error(`Can't get post with id ${c.req.param("id")}`);
   }
-};
+}
 
-export const remove = async (c: Context) => {
+export async function remove(c: Context) {
   try {
     const postId = c.req.param("id");
     const userId = c.get("userId");
@@ -82,25 +86,26 @@ export const remove = async (c: Context) => {
     await CommentModel.deleteMany({ post: postId });
 
     return c.json({ success: true });
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     if (!c.res.status) {
       c.status(500);
     }
     throw err;
   }
-};
+}
 
-export const update = async (c: Context) => {
+export async function update(c: Context) {
   try {
     const postId = c.req.param("id");
     const userId = c.get("userId");
     const data = await c.req.json();
-    
+
     const updateData = updatePostSchema.parse(data);
-    
+
     const post = await PostModel.findOne({ _id: postId });
-    
+
     if (!post) {
       c.status(404);
       throw new Error("Post not found");
@@ -114,22 +119,23 @@ export const update = async (c: Context) => {
     const updatedPost = await PostModel.findOneAndUpdate(
       { _id: postId },
       { $set: updateData },
-      { new: true }
+      { new: true },
     )
       .populate("user", "-passwordHash")
       .lean();
 
     return c.json(updatedPost);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     if (!c.res.status) {
       c.status(500);
     }
     throw err;
   }
-};
+}
 
-export const likePost = async (c: Context) => {
+export async function likePost(c: Context) {
   try {
     const postId = c.req.param("id");
     const data = await c.req.json();
@@ -144,29 +150,31 @@ export const likePost = async (c: Context) => {
     // Toggle like
     if (post.likes[userId]) {
       delete post.likes[userId];
-    } else {
+    }
+    else {
       post.likes[userId] = true;
     }
 
     const updatedPost = await PostModel.findByIdAndUpdate(
       postId,
       { likes: post.likes },
-      { new: true }
+      { new: true },
     )
       .populate("user", "-passwordHash")
       .lean();
 
     return c.json(updatedPost);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     if (!c.res.status) {
       c.status(500);
     }
     throw err;
   }
-};
+}
 
-export const getPostComments = async (c: Context) => {
+export async function getPostComments(c: Context) {
   try {
     const postId = c.req.param("id");
     const comments = await CommentModel.find({ post: postId })
@@ -176,9 +184,10 @@ export const getPostComments = async (c: Context) => {
       .exec();
 
     return c.json(comments);
-  } catch (err) {
+  }
+  catch (err) {
     console.log(err);
     c.status(500);
     throw new Error("Failed to get comments");
   }
-};
+}

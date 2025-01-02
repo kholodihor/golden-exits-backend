@@ -1,18 +1,18 @@
-import { Hono } from "hono";
-import { logger } from "hono/logger";
-import { cors } from "hono/cors";
 import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-import { errorHandler, notFound } from "./middleware/errorMiddlreware.js";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 
-import { authRoutes } from "./routes/auth.routes.js";
-import { commentsRoutes } from "./routes/comments.routes.js";
-import { newsRoutes } from "./routes/news.routes.js";
-import { postRoutes } from "./routes/post.routes.js";
-import { productRoutes } from "./routes/product.routes.js";
-import { stripeRoutes } from "./routes/stripe.routes.js";
-import { uploadsRoutes } from "./routes/uploads.routes.js";
-import { videoRoutes } from "./routes/video.routes.js";
+import connectDB from "./config/db";
+import { errorHandler, notFound } from "./middleware/errorMiddlreware";
+import { authRoutes } from "./routes/auth.routes";
+import { commentsRoutes } from "./routes/comments.routes";
+import { newsRoutes } from "./routes/news.routes";
+import { postRoutes } from "./routes/post.routes";
+import { productRoutes } from "./routes/product.routes";
+import { stripeRoutes } from "./routes/stripe.routes";
+import { uploadsRoutes } from "./routes/uploads.routes";
+import { videoRoutes } from "./routes/video.routes";
 
 dotenv.config();
 
@@ -31,7 +31,7 @@ app.use(
     exposeHeaders: ["Content-Length", "X-Requested-With"],
     credentials: true,
     maxAge: 3600,
-  })
+  }),
 );
 
 app.get("/", (c) => {
@@ -49,8 +49,8 @@ app.route("/api/", uploadsRoutes);
 app.route("/api/", videoRoutes);
 
 app.onError((err, c) => {
-  const error = errorHandler(c);
-  return error;
+  console.error("Error:", err);
+  return errorHandler(c);
 });
 
 app.notFound((c) => {

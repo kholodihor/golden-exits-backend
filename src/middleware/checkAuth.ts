@@ -1,12 +1,14 @@
-import { Context, Next } from "hono";
-import { Jwt } from "hono/utils/jwt";
+import type { Context, Next } from "hono";
+
 import dotenv from "dotenv";
+import { Jwt } from "hono/utils/jwt";
+
 import UserModel from "../models/user.model";
 
 dotenv.config();
 
 // Protect Route for Authenticated Users
-export const checkAuth = async (c: Context, next: Next) => {
+export async function checkAuth(c: Context, next: Next) {
   let token;
   if (c.req.header("Authorization")) {
     try {
@@ -20,12 +22,13 @@ export const checkAuth = async (c: Context, next: Next) => {
       c.set("userId", user?._id);
 
       await next();
-    } catch (err) {
-      throw new Error("Invalid token! You are not authorized!");
+    }
+    catch {
+      return c.json({ message: "Not authorized, token failed" }, 401);
     }
   }
 
   if (!token) {
     throw new Error("Not authorized! No token found!");
   }
-};
+}

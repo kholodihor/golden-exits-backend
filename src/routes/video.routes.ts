@@ -1,6 +1,7 @@
 import { Hono } from "hono";
-import { checkAuth } from "../middleware/checkAuth.js";
+
 import { VideoController } from "../controllers/index.js";
+import { checkAuth } from "../middleware/checkAuth.js";
 
 export const videoRoutes = new Hono()
   .post("/videos", checkAuth, VideoController.uploadVideo)

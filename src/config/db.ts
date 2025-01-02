@@ -1,9 +1,10 @@
-import * as mongoose from "mongoose";
 import dotenv from "dotenv";
+import * as mongoose from "mongoose";
+import process from "node:process";
 
 dotenv.config();
 
-const connectDB = async () => {
+async function connectDB() {
   try {
     if (process.env.MONGODB_URL !== undefined) {
       const conn = await mongoose.connect(process.env.MONGODB_URL, {
@@ -12,10 +13,11 @@ const connectDB = async () => {
 
       console.log(`MongoDB Connected: ${conn.connection.host}`);
     }
-  } catch (err: any) {
+  }
+  catch (err: any) {
     console.error(`Error: ${err.message}`);
     process.exit(1);
   }
-};
+}
 
 export default connectDB;

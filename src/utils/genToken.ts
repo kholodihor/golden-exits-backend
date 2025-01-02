@@ -1,8 +1,9 @@
-import { Jwt } from "hono/utils/jwt";
 import dotenv from "dotenv";
+import { Jwt } from "hono/utils/jwt";
+import process from "node:process";
 
 dotenv.config();
 
-export const genToken = (id: string) => {
+export function genToken(id: string) {
   return Jwt.sign({ id }, process.env.JWT_SECRET || "");
-};
+}

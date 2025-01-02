@@ -1,13 +1,15 @@
-import { Context } from "hono";
-import stripe from "stripe";
+import type { Context } from "hono";
+
 import dotenv from "dotenv";
+import stripe from "stripe";
+
 dotenv.config();
 
 const KEY = process.env.STRIPE_KEY || "";
 
-export const createPayment = async (c: Context) => {
+export async function createPayment(c: Context) {
   const data = await c.req.json();
-  //@ts-expect-error
+  // @ts-expect-error - Stripe types don't match exactly with our implementation but it works correctly
   stripe(KEY).charges.create(
     {
       source: data.tokenId,
@@ -19,10 +21,11 @@ export const createPayment = async (c: Context) => {
         console.log(stripeErr);
         c.status(500);
         throw new Error(stripeErr);
-      } else {
+      }
+      else {
         c.status(200);
         throw new Error(stripeRes);
       }
-    }
+    },
   );
-};
+}
