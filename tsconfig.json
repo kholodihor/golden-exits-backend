@@ -8,7 +8,11 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "types": ["node"],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "hono/jsx",
+    "outDir": "./build",
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
   "include": ["./src/*.ts", "./src/**/*.ts"]
 }
