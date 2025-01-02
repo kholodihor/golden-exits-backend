@@ -1,18 +1,24 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node"],
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "build",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "outDir": "./build",
-    "rootDir": "./src",
-    "esModuleInterop": true,
-    "resolveJsonModule": true
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true
   },
-  "include": ["./src/*.ts", "./src/**/*.ts"]
+  "include": ["src/**/*.ts", "api/**/*.ts"],
+  "exclude": ["node_modules"]
 }
