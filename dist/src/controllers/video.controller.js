@@ -1,0 +1,75 @@
+import VideoModel from "../models/video.model.js";
+import { createVideoSchema } from "../schema/index.js";
+export async function uploadVideo(c) {
+    const data = await c.req.json();
+    try {
+        const video = createVideoSchema.parse(data);
+        const newVideo = new VideoModel(video);
+        await newVideo.save();
+        return c.json(newVideo);
+    }
+    catch (err) {
+        console.log(err);
+        c.status(500);
+        throw new Error("Failed to create post");
+    }
+}
+export async function getVideos(c) {
+    try {
+        const videos = await VideoModel.find().populate("user").exec();
+        return c.json(videos);
+    }
+    catch (err) {
+        console.log(err);
+        c.status(500);
+        throw new Error("Failed to get videos");
+    }
+}
+export async function updateViews(c) {
+    try {
+        const { views } = await c.req.json();
+        const videoId = c.req.param("id");
+        await VideoModel.updateOne({
+            _id: videoId,
+        }, {
+            views,
+        });
+        c.status(200);
+        return c.json({ success: true });
+    }
+    catch (err) {
+        console.log(err);
+        c.status(500);
+        throw new Error("Failed to update views");
+    }
+}
+export async function likeVideo(c) {
+    try {
+        const videoId = c.req.param("id");
+        const { userId } = await c.req.json();
+        const video = await VideoModel.findById(videoId);
+        if (video) {
+            const isLiked = video.likes.get(userId);
+            if (isLiked) {
+                video.likes.delete(userId);
+            }
+            else {
+                video.likes.set(userId, true);
+            }
+            await VideoModel.findByIdAndUpdate({
+                _id: videoId,
+            }, { likes: video.likes }, { new: true });
+            c.status(200);
+            return c.json({ success: true });
+        }
+        else {
+            c.status(404);
+            return c.json({ message: "Video not found", success: false });
+        }
+    }
+    catch (err) {
+        console.log(err);
+        c.status(500);
+        throw new Error("Failed to update likes");
+    }
+}

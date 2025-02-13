@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 
 import NewsModel from "../models/news.model";
-import { createArticleSchema } from "../schema";
+import { createArticleSchema } from "../schema/index";
 
 export async function createNews(c: Context) {
   try {
@@ -25,13 +25,20 @@ export async function createNews(c: Context) {
 
 export async function getNews(c: Context) {
   try {
-    const news = await NewsModel.find();
+    const news = await NewsModel.find().lean().exec();
+    if (!news) {
+      c.status(404);
+      return c.json({ message: "No articles found" });
+    }
     c.status(200);
     return c.json(news);
   }
   catch (err) {
-    console.log(err);
+    console.error("Error fetching articles:", err);
     c.status(500);
-    throw new Error("Failed to get articles");
+    return c.json({
+      message: "Failed to get articles",
+      error: err instanceof Error ? err.message : "Unknown error",
+    });
   }
 }

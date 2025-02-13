@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {
     "start": "tsx watch src/index.ts",
-    "build": "tsc",
+    "clean": "rm -rf dist && find api -name '*.js' -type f -delete",
+    "build": "npm run clean && tsc && chmod +x scripts/add-js-extensions.sh && ./scripts/add-js-extensions.sh",
     "lint": "eslint .",
     "lint:fix": "npm run lint --fix"
   },

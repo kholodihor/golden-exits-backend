@@ -2,7 +2,7 @@ import type { Context } from "hono";
 
 import CommentModel from "../models/comment.model";
 import PostModel from "../models/post.model";
-import { createPostSchema, updatePostSchema } from "../schema";
+import { createPostSchema, updatePostSchema } from "../schema/index";
 
 export async function create(c: Context) {
   const data = await c.req.json();

@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 
 import VideoModel from "../models/video.model";
-import { createVideoSchema } from "../schema";
+import { createVideoSchema } from "../schema/index";
 
 export async function uploadVideo(c: Context) {
   const data = await c.req.json();

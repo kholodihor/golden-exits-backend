@@ -1,7 +1,7 @@
 import type { Context } from "hono";
 
 import ProductModel from "../models/product.model";
-import { createProductSchema } from "../schema";
+import { createProductSchema } from "../schema/index";
 
 export async function createProduct(c: Context) {
   const data = await c.req.json();

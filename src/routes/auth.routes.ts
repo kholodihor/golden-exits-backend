@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { UserController } from "../controllers/index.js";
+import { UserController } from "../controllers/index";
 import { checkAuth } from "../middleware/checkAuth";
 
 export const authRoutes = new Hono()

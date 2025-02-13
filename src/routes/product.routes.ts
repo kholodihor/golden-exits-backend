@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { ProductController } from "../controllers/index.js";
+import { ProductController } from "../controllers/index";
 
 export const productRoutes = new Hono()
   .post("/product", ProductController.createProduct)

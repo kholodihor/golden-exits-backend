@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { StripeController } from "../controllers/index.js";
+import { StripeController } from "../controllers/index";
 
 export const stripeRoutes = new Hono().post(
   "/payment",

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { PostController } from "../controllers";
+import { PostController } from "../controllers/index";
 import { checkAuth } from "../middleware/checkAuth";
 
 export const postRoutes = new Hono()

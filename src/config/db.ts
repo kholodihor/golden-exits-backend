@@ -6,9 +6,13 @@ dotenv.config();
 
 async function connectDB() {
   try {
-    if (process.env.MONGODB_URL !== undefined) {
-      const conn = await mongoose.connect(process.env.MONGODB_URL, {
+    if (process.env.MONGODB_URI !== undefined) {
+      const conn = await mongoose.connect(process.env.MONGODB_URI, {
         autoIndex: true,
+        serverSelectionTimeoutMS: 15000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 15000,
+        maxPoolSize: 50,
       });
 
       console.log(`MongoDB Connected: ${conn.connection.host}`);
