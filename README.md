@@ -23,7 +23,7 @@ A modern Node.js backend API for the Golden Exits platform. Built with Hono, Typ
 
 - Node.js (v18.x or higher)
 - MongoDB (local or Atlas)
-- npm or yarn
+- npm
 
 ### Installation
 
@@ -38,8 +38,6 @@ A modern Node.js backend API for the Golden Exits platform. Built with Hono, Typ
 
    ```bash
    npm install
-   # or
-   yarn
    ```
 
 3. Set up environment variables:
@@ -47,7 +45,7 @@ A modern Node.js backend API for the Golden Exits platform. Built with Hono, Typ
    Create a `.env` file in the root directory with the following variables:
 
    ```env
-   PORT=4000
+   PORT=8080
    MONGODB_URI=mongodb://localhost:27017/golden-exits
    JWT_SECRET=your_jwt_secret
    CLOUDINARY_CLOUD_NAME=your_cloudinary_name
@@ -59,14 +57,12 @@ A modern Node.js backend API for the Golden Exits platform. Built with Hono, Typ
 
    ```bash
    npm run start
-   # or
-   yarn start
    ```
 
 5. The API will be available at:
 
    ```
-   http://localhost:4000
+   http://localhost:8080
    ```
 
 ## 🛠️ Tech Stack
