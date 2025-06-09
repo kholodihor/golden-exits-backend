@@ -5,6 +5,7 @@ import { checkAuth } from "../middleware/checkAuth";
 
 export const videoRoutes = new Hono()
   .post("/videos", checkAuth, VideoController.uploadVideo)
-  .patch("/videos/:id", VideoController.updateViews)
+  .post("/videos/:id/views", VideoController.updateViews) // Changed to POST for views increment
   .patch("/videos/:id/like", VideoController.likeVideo)
-  .get("/videos", VideoController.getVideos);
+  .get("/videos", VideoController.getVideos)
+  .get("/videos/:id", VideoController.getVideoById);

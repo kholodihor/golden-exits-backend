@@ -3,8 +3,13 @@ import { Hono } from "hono";
 import { CommentController } from "../controllers/index";
 import { checkAuth } from "../middleware/checkAuth";
 
-export const commentsRoutes = new Hono().post(
-  "/comments/:id",
-  checkAuth,
-  CommentController.createComment,
-);
+export const commentsRoutes = new Hono()
+  .post(
+    "/comments/:id",
+    checkAuth,
+    CommentController.createComment
+  )
+  .get(
+    "/comments/:id",
+    CommentController.getCommentsByPost
+  );
