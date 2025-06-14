@@ -77,9 +77,15 @@ export async function remove(c: Context) {
       throw new Error("Post not found");
     }
 
-    if (post.user.toString() !== userId) {
+    const postUserId = post.user.toString();
+    const currentUserId = userId.toString();
+    
+    console.log('Post user ID:', postUserId, 'Type:', typeof postUserId);
+    console.log('Current user ID:', currentUserId, 'Type:', typeof currentUserId);
+    
+    if (postUserId !== currentUserId) {
       c.status(403);
-      throw new Error("No permission to delete this post");
+      throw new Error(`No permission to delete this post. Post owner: ${postUserId}, Current user: ${currentUserId}`);
     }
 
     await PostModel.findOneAndDelete({ _id: postId });
@@ -111,9 +117,13 @@ export async function update(c: Context) {
       throw new Error("Post not found");
     }
 
-    if (post.user.toString() !== userId) {
+    // Debug: Log the IDs being compared
+    console.log('Post User ID (from DB):', post.user.toString(), 'Type:', typeof post.user.toString());
+    console.log('Authenticated User ID:', userId, 'Type:', typeof userId);
+    
+    if (post.user.toString() !== userId.toString()) {
       c.status(403);
-      throw new Error("No permission to update this post");
+      throw new Error(`No permission to update this post. Post owner: ${post.user}, Current user: ${userId}`);
     }
 
     const updatedPost = await PostModel.findOneAndUpdate(

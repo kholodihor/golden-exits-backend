@@ -20,13 +20,21 @@ export async function uploadVideo(c: Context) {
 
 export async function getVideos(c: Context) {
   try {
-    const videos = await VideoModel.find().populate("user").exec();
+    const videos = await VideoModel.find()
+      .populate({
+        path: 'user',
+        select: 'fullName avatarUrl'
+      })
+      .select('-__v')
+      .lean()
+      .exec();
+    
     return c.json(videos);
   }
   catch (err) {
-    console.log(err);
+    console.error('Error fetching videos:', err);
     c.status(500);
-    throw new Error("Failed to get videos");
+    return c.json({ success: false, message: "Failed to get videos" });
   }
 }
 
@@ -87,6 +95,87 @@ export async function getVideoById(c: Context) {
     console.error("Error fetching video:", err);
     c.status(500);
     return c.json({ success: false, message: "Failed to fetch video" });
+  }
+}
+
+export async function updateVideo(c: Context) {
+  try {
+    const videoId = c.req.param("id");
+    const userId = c.get('userId');
+    const updateData = await c.req.json();
+    
+    if (!videoId) {
+      c.status(400);
+      return c.json({ success: false, message: "Video ID is required" });
+    }
+
+    // First find the video to check ownership
+    const video = await VideoModel.findById(videoId);
+    if (!video) {
+      c.status(404);
+      return c.json({ success: false, message: "Video not found" });
+    }
+
+    // Check if the user is the owner of the video
+    if (video.user.toString() !== userId) {
+      c.status(403);
+      return c.json({ success: false, message: "Not authorized to update this video" });
+    }
+
+    // Update the video
+    const updatedVideo = await VideoModel.findByIdAndUpdate(
+      videoId,
+      { $set: updateData },
+      { new: true }
+    );
+
+    return c.json({ success: true, video: updatedVideo });
+  } catch (err) {
+    console.error("Error updating video:", err);
+    c.status(500);
+    return c.json({ success: false, message: "Failed to update video" });
+  }
+}
+
+export async function deleteVideo(c: Context) {
+  try {
+    const videoId = c.req.param("id");
+    const userId = c.get('userId');
+    
+    if (!videoId) {
+      c.status(400);
+      return c.json({ success: false, message: "Video ID is required" });
+    }
+
+    // First find the video to check ownership
+    const video = await VideoModel.findById(videoId);
+    if (!video) {
+      c.status(404);
+      return c.json({ success: false, message: "Video not found" });
+    }
+
+    // Check if the user is the owner of the video
+    // Convert both IDs to strings for consistent comparison
+    const videoUserId = video.user.toString();
+    const currentUserId = userId.toString();
+    
+    console.log('Video user ID:', videoUserId, typeof videoUserId);
+    console.log('Current user ID:', currentUserId, typeof currentUserId);
+    
+    if (videoUserId !== currentUserId) {
+      console.log(`User ${currentUserId} is not authorized to delete video ${videoId} owned by ${videoUserId}`);
+      c.status(403);
+      return c.json({ success: false, message: "Not authorized to delete this video" });
+    }
+
+    // Delete the video
+    await VideoModel.findByIdAndDelete(videoId);
+
+    return c.json({ success: true, message: "Video deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting video:", err);
+    c.status(500);
+    return c.json({ success: false, message: "Failed to delete video" });
   }
 }
 

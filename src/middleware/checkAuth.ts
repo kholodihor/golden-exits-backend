@@ -10,25 +10,35 @@ dotenv.config();
 // Protect Route for Authenticated Users
 export async function checkAuth(c: Context, next: Next) {
   let token;
-  if (c.req.header("Authorization")) {
-    try {
-      token = c.req.header("Authorization")?.replace(/Bearer\s+/i, "");
-      if (!token) {
-        return c.json({ message: "Not authorized to access this route" });
-      }
-
-      const { id } = await Jwt.verify(token, process.env.JWT_SECRET || "");
-      const user = await UserModel.findById(id).select("-password");
-      c.set("userId", user?._id);
-
-      await next();
+  try {
+    token = c.req.header("Authorization")?.replace(/Bearer\s+/i, "");
+    
+    if (!token) {
+      c.status(401);
+      return c.json({ success: false, message: "Not authorized, no token provided" });
     }
-    catch {
-      return c.json({ message: "Not authorized, token failed" }, 401);
-    }
-  }
 
-  if (!token) {
-    throw new Error("Not authorized! No token found!");
+    const decoded = await Jwt.verify(token, process.env.JWT_SECRET || "");
+    
+    if (!decoded || !decoded.id) {
+      c.status(401);
+      return c.json({ success: false, message: "Invalid token" });
+    }
+
+    const user = await UserModel.findById(decoded.id).select("-password");
+    
+    if (!user) {
+      c.status(401);
+      return c.json({ success: false, message: "User not found" });
+    }
+
+    // Set user ID in context for use in controllers
+    c.set("userId", user._id.toString());
+    
+    await next();
+  } catch (error) {
+    console.error("Auth error:", error);
+    c.status(401);
+    return c.json({ success: false, message: "Not authorized, token failed" });
   }
 }
