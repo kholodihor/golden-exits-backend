@@ -1,118 +1,57 @@
 import type { Context } from "hono";
 
 import bcrypt from "bcryptjs";
+import { HTTPException } from "hono/http-exception";
 
 import UserModel from "../models/user.model";
+import { loginSchema, registerSchema } from "../schema/index";
 import { genToken } from "../utils/genToken";
 
-export async function getUsers(c: Context) {
-  const users = await UserModel.find();
-  return c.json({ users });
+async function authResponse(c: Context, user: InstanceType<typeof UserModel>, message: string) {
+  const token = await genToken(user._id.toString());
+  return c.json({
+    success: true,
+    data: { _id: user._id, username: user.username, email: user.email },
+    token,
+    message,
+  });
 }
 
 export async function register(c: Context) {
-  const { username, email, password, avatarUrl } = await c.req.json();
+  const { username, email, password, avatarUrl } = registerSchema.parse(await c.req.json());
 
-  try {
-    const userExists = await UserModel.findOne({ email });
-    if (userExists) {
-      c.status(400);
-      throw new Error("User already exists");
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash(password, salt);
-
-    const user = await UserModel.create({
-      username,
-      email,
-      avatarUrl,
-      passwordHash: hash,
-    });
-
-    if (!user) {
-      c.status(400);
-      throw new Error("Invalid user data");
-    }
-
-    const token = await genToken(user._id.toString());
-
-    return c.json({
-      success: true,
-      data: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-      },
-      token,
-      message: "User created successfully",
-    });
+  if (await UserModel.exists({ email })) {
+    throw new HTTPException(400, { message: "User already exists" });
   }
-  catch (error) {
-    console.log(error);
-    c.status(500);
-    throw new Error("Failed to create user");
-  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const user = await UserModel.create({ username, email, avatarUrl, passwordHash });
+
+  return authResponse(c, user, "User created successfully");
 }
 
 export async function login(c: Context) {
-  const { email, password } = await c.req.json();
-
-  if (!email || !password) {
-    c.status(400);
-    throw new Error("Please provide an email and password");
-  }
+  const { email, password } = loginSchema.parse(await c.req.json());
 
   const user = await UserModel.findOne({ email });
-  if (!user) {
-    c.status(401);
-    throw new Error("No user found with this email");
+  // Same error for unknown email and wrong password, so emails can't be enumerated.
+  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    throw new HTTPException(401, { message: "Invalid credentials" });
   }
 
-  const isValidPass = await bcrypt.compare(password, user.passwordHash);
-
-  if (!isValidPass) {
-    c.status(401);
-    throw new Error("Invalid credentials");
-  }
-  else {
-    const token = await genToken(user._id.toString());
-
-    return c.json({
-      success: true,
-      data: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-      },
-      token,
-      message: "User logged in successfully",
-    });
-  }
+  return authResponse(c, user, "User logged in successfully");
 }
 
 export async function getUser(c: Context) {
-  try {
-    const userId = c.get("userId");
-    const user = await UserModel.findById(userId);
+  const user = await UserModel.findById(c.get("userId"));
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found" });
+  }
 
-    if (user) {
-      c.status(200);
-      return c.json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
-      });
-    }
-    else {
-      c.status(400);
-      throw new Error("User not found");
-    }
-  }
-  catch (err) {
-    console.log(err);
-    c.status(500);
-    throw new Error("Failed to get user");
-  }
+  return c.json({
+    _id: user._id,
+    username: user.username,
+    email: user.email,
+    avatarUrl: user.avatarUrl,
+  });
 }

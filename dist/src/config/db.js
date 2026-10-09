@@ -1,23 +1,12 @@
-import dotenv from "dotenv";
-import * as mongoose from "mongoose";
-import process from "node:process";
-dotenv.config();
-async function connectDB() {
-    try {
-        if (process.env.MONGODB_URI !== undefined) {
-            const conn = await mongoose.connect(process.env.MONGODB_URI, {
-                autoIndex: true,
-                serverSelectionTimeoutMS: 15000,
-                socketTimeoutMS: 45000,
-                connectTimeoutMS: 15000,
-                maxPoolSize: 50,
-            });
-            console.log(`MongoDB Connected: ${conn.connection.host}`);
-        }
-    }
-    catch (err) {
-        console.error(`Error: ${err.message}`);
-        process.exit(1);
-    }
+import mongoose from "mongoose";
+import { requireEnv } from "./env.js";
+export async function connectDB() {
+    const conn = await mongoose.connect(requireEnv("MONGODB_URI"), {
+        autoIndex: true,
+        serverSelectionTimeoutMS: 15000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 15000,
+        maxPoolSize: 50,
+    });
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
 }
-export default connectDB;

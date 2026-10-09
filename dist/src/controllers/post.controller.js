@@ -1,158 +1,62 @@
+import { HTTPException } from "hono/http-exception";
 import CommentModel from "../models/comment.model.js";
 import PostModel from "../models/post.model.js";
 import { createPostSchema, updatePostSchema } from "../schema/index.js";
+import { toggleLikeUpdate } from "../utils/likes.js";
+import { assertOwner } from "../utils/ownership.js";
+import { PUBLIC_USER_FIELDS } from "../utils/selects.js";
+import { findPostComments } from "./comment.controller.js";
+async function findPostOr404(postId) {
+    const post = await PostModel.findById(postId);
+    if (!post) {
+        throw new HTTPException(404, { message: "Post not found" });
+    }
+    return post;
+}
 export async function create(c) {
-    const data = await c.req.json();
-    try {
-        const post = createPostSchema.parse(data);
-        const newPost = new PostModel({
-            title: post.title,
-            text: post.text,
-            imageUrl: post.imageUrl,
-            comments: [],
-            likes: {},
-            user: c.get("userId"),
-        });
-        await newPost.save();
-        return c.json(newPost.toJSON());
-    }
-    catch (err) {
-        console.log(err);
-        c.status(500);
-        throw new Error("Failed to create post");
-    }
+    const data = createPostSchema.parse(await c.req.json());
+    const newPost = await PostModel.create({ ...data, user: c.get("userId") });
+    return c.json(newPost.toJSON());
 }
 export async function getAllPosts(c) {
-    try {
-        const posts = await PostModel.find()
-            .populate("user", "-passwordHash")
-            .lean()
-            .exec();
-        return c.json(posts);
-    }
-    catch (err) {
-        console.log(err);
-        c.status(500);
-        throw new Error("Can't get posts");
-    }
+    const posts = await PostModel.find().populate("user", PUBLIC_USER_FIELDS).lean();
+    return c.json(posts);
 }
 export async function getOne(c) {
-    try {
-        const postId = c.req.param("id");
-        const post = await PostModel.findOne({ _id: postId })
-            .populate("user", "-passwordHash")
-            .lean()
-            .exec();
-        if (!post) {
-            c.status(404);
-            throw new Error(`Post not found with id ${postId}`);
-        }
-        return c.json(post);
+    const post = await PostModel.findById(c.req.param("id"))
+        .populate("user", PUBLIC_USER_FIELDS)
+        .lean();
+    if (!post) {
+        throw new HTTPException(404, { message: "Post not found" });
     }
-    catch (err) {
-        console.log(err);
-        if (c.res.status !== 404) {
-            c.status(500);
-        }
-        throw new Error(`Can't get post with id ${c.req.param("id")}`);
-    }
+    return c.json(post);
 }
 export async function remove(c) {
-    try {
-        const postId = c.req.param("id");
-        const userId = c.get("userId");
-        const post = await PostModel.findOne({ _id: postId });
-        if (!post) {
-            c.status(404);
-            throw new Error("Post not found");
-        }
-        if (post.user.toString() !== userId) {
-            c.status(403);
-            throw new Error("No permission to delete this post");
-        }
-        await PostModel.findOneAndDelete({ _id: postId });
-        await CommentModel.deleteMany({ post: postId });
-        return c.json({ success: true });
-    }
-    catch (err) {
-        console.log(err);
-        if (!c.res.status) {
-            c.status(500);
-        }
-        throw err;
-    }
+    const post = await findPostOr404(c.req.param("id"));
+    assertOwner(post, c.get("userId"));
+    await CommentModel.deleteMany({ _id: { $in: post.comments } });
+    await post.deleteOne();
+    return c.json({ success: true });
 }
 export async function update(c) {
-    try {
-        const postId = c.req.param("id");
-        const userId = c.get("userId");
-        const data = await c.req.json();
-        const updateData = updatePostSchema.parse(data);
-        const post = await PostModel.findOne({ _id: postId });
-        if (!post) {
-            c.status(404);
-            throw new Error("Post not found");
-        }
-        if (post.user.toString() !== userId) {
-            c.status(403);
-            throw new Error("No permission to update this post");
-        }
-        const updatedPost = await PostModel.findOneAndUpdate({ _id: postId }, { $set: updateData }, { new: true })
-            .populate("user", "-passwordHash")
-            .lean();
-        return c.json(updatedPost);
-    }
-    catch (err) {
-        console.log(err);
-        if (!c.res.status) {
-            c.status(500);
-        }
-        throw err;
-    }
+    const postId = c.req.param("id");
+    const data = updatePostSchema.parse(await c.req.json());
+    assertOwner(await findPostOr404(postId), c.get("userId"));
+    const updatedPost = await PostModel.findByIdAndUpdate(postId, { $set: data }, { new: true })
+        .populate("user", PUBLIC_USER_FIELDS)
+        .lean();
+    return c.json(updatedPost);
 }
 export async function likePost(c) {
-    try {
-        const postId = c.req.param("id");
-        const data = await c.req.json();
-        const userId = data.userId;
-        const post = await PostModel.findById(postId);
-        if (!post) {
-            c.status(404);
-            throw new Error("Post not found");
-        }
-        // Toggle like
-        if (post.likes[userId]) {
-            delete post.likes[userId];
-        }
-        else {
-            post.likes[userId] = true;
-        }
-        const updatedPost = await PostModel.findByIdAndUpdate(postId, { likes: post.likes }, { new: true })
-            .populate("user", "-passwordHash")
-            .lean();
-        return c.json(updatedPost);
-    }
-    catch (err) {
-        console.log(err);
-        if (!c.res.status) {
-            c.status(500);
-        }
-        throw err;
-    }
+    const postId = c.req.param("id");
+    const post = await findPostOr404(postId);
+    const { update } = toggleLikeUpdate(post.likes, c.get("userId"));
+    const updatedPost = await PostModel.findByIdAndUpdate(postId, update, { new: true })
+        .populate("user", PUBLIC_USER_FIELDS)
+        .lean();
+    return c.json(updatedPost);
 }
 export async function getPostComments(c) {
-    try {
-        const postId = c.req.param("id");
-        const comments = await CommentModel.find({ post: postId })
-            .populate("user", "-passwordHash")
-            .lean()
-            .sort({ createdAt: -1 })
-            .exec();
-        return c.json(comments);
-    }
-    catch (err) {
-        console.log(err);
-        c.status(500);
-        throw new Error("Failed to get comments");
-    }
+    const comments = await findPostComments(c.req.param("id"), -1);
+    return c.json(comments);
 }

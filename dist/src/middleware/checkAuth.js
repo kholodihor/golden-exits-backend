@@ -1,26 +1,25 @@
-import dotenv from "dotenv";
-import { Jwt } from "hono/utils/jwt";
+import { createMiddleware } from "hono/factory";
+import { HTTPException } from "hono/http-exception";
+import { verify } from "hono/jwt";
+import { requireEnv } from "../config/env.js";
 import UserModel from "../models/user.model.js";
-dotenv.config();
 // Protect Route for Authenticated Users
-export async function checkAuth(c, next) {
-    let token;
-    if (c.req.header("Authorization")) {
-        try {
-            token = c.req.header("Authorization")?.replace(/Bearer\s+/i, "");
-            if (!token) {
-                return c.json({ message: "Not authorized to access this route" });
-            }
-            const { id } = await Jwt.verify(token, process.env.JWT_SECRET || "");
-            const user = await UserModel.findById(id).select("-password");
-            c.set("userId", user?._id);
-            await next();
-        }
-        catch {
-            return c.json({ message: "Not authorized, token failed" }, 401);
-        }
-    }
+export const checkAuth = createMiddleware(async (c, next) => {
+    const token = c.req.header("Authorization")?.replace(/^Bearer\s+/i, "");
     if (!token) {
-        throw new Error("Not authorized! No token found!");
+        throw new HTTPException(401, { message: "Not authorized, no token provided" });
     }
-}
+    const secret = requireEnv("JWT_SECRET");
+    let payload;
+    try {
+        payload = await verify(token, secret);
+    }
+    catch {
+        throw new HTTPException(401, { message: "Not authorized, token failed" });
+    }
+    if (typeof payload.id !== "string" || !(await UserModel.exists({ _id: payload.id }))) {
+        throw new HTTPException(401, { message: "Not authorized, user not found" });
+    }
+    c.set("userId", payload.id);
+    await next();
+});

@@ -1,13 +1,11 @@
-import mongoose from "mongoose";
-
-import type { IComment } from "./comment.model";
+import mongoose, { type Types } from "mongoose";
 
 export interface IPost {
   title: string;
   text: string;
   user: string;
-  comments: IComment[];
-  likes: any;
+  comments: Types.ObjectId[];
+  likes: Map<string, boolean>;
   imageUrl: string;
 }
 

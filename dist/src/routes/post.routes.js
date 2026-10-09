@@ -7,5 +7,5 @@ export const postRoutes = new Hono()
     .post("/posts", checkAuth, PostController.create)
     .delete("/posts/:id", checkAuth, PostController.remove)
     .patch("/posts/:id", checkAuth, PostController.update)
-    .patch("/posts/:id/like", PostController.likePost)
+    .patch("/posts/:id/like", checkAuth, PostController.likePost)
     .get("/posts/comments/:id", PostController.getPostComments);

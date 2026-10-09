@@ -1,44 +1,30 @@
-import type { Context, Next } from "hono";
+import { createMiddleware } from "hono/factory";
+import { HTTPException } from "hono/http-exception";
+import { verify } from "hono/jwt";
 
-import dotenv from "dotenv";
-import { Jwt } from "hono/utils/jwt";
-
+import { requireEnv } from "../config/env";
 import UserModel from "../models/user.model";
 
-dotenv.config();
-
 // Protect Route for Authenticated Users
-export async function checkAuth(c: Context, next: Next) {
-  let token;
-  try {
-    token = c.req.header("Authorization")?.replace(/Bearer\s+/i, "");
-    
-    if (!token) {
-      c.status(401);
-      return c.json({ success: false, message: "Not authorized, no token provided" });
-    }
-
-    const decoded = await Jwt.verify(token, process.env.JWT_SECRET || "");
-    
-    if (!decoded || !decoded.id) {
-      c.status(401);
-      return c.json({ success: false, message: "Invalid token" });
-    }
-
-    const user = await UserModel.findById(decoded.id).select("-password");
-    
-    if (!user) {
-      c.status(401);
-      return c.json({ success: false, message: "User not found" });
-    }
-
-    // Set user ID in context for use in controllers
-    c.set("userId", user._id.toString());
-    
-    await next();
-  } catch (error) {
-    console.error("Auth error:", error);
-    c.status(401);
-    return c.json({ success: false, message: "Not authorized, token failed" });
+export const checkAuth = createMiddleware(async (c, next) => {
+  const token = c.req.header("Authorization")?.replace(/^Bearer\s+/i, "");
+  if (!token) {
+    throw new HTTPException(401, { message: "Not authorized, no token provided" });
   }
-}
+
+  const secret = requireEnv("JWT_SECRET");
+  let payload;
+  try {
+    payload = await verify(token, secret);
+  }
+  catch {
+    throw new HTTPException(401, { message: "Not authorized, token failed" });
+  }
+
+  if (typeof payload.id !== "string" || !(await UserModel.exists({ _id: payload.id }))) {
+    throw new HTTPException(401, { message: "Not authorized, user not found" });
+  }
+
+  c.set("userId", payload.id);
+  await next();
+});

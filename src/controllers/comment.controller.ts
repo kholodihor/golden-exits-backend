@@ -1,73 +1,40 @@
 import type { Context } from "hono";
+import type { SortOrder } from "mongoose";
+
+import { HTTPException } from "hono/http-exception";
 
 import CommentModel from "../models/comment.model";
 import PostModel from "../models/post.model";
+import { createCommentSchema } from "../schema/index";
+import { PUBLIC_USER_FIELDS } from "../utils/selects";
+
+export async function findPostComments(postId: string, order: SortOrder) {
+  const post = await PostModel.findById(postId).select("comments").lean();
+  if (!post) {
+    throw new HTTPException(404, { message: "Post not found" });
+  }
+
+  return CommentModel.find({ _id: { $in: post.comments } })
+    .populate("user", PUBLIC_USER_FIELDS)
+    .sort({ createdAt: order })
+    .lean();
+}
 
 export async function createComment(c: Context) {
-  try {
-    const { userId, comment } = await c.req.json();
-    const postId = c.req.param("id");
+  const { comment } = createCommentSchema.parse(await c.req.json());
+  const postId = c.req.param("id");
 
-    if (!comment) {
-      c.status(400);
-      return c.json({ success: false, message: "Comment can't be empty" });
-    }
-
-    const newComment = new CommentModel({ comment, user: userId });
-    await newComment.save();
-
-    try {
-      await PostModel.findByIdAndUpdate(postId, {
-        $push: { comments: newComment._id },
-      });
-    }
-    catch (error) {
-      console.error("Error updating post with comment:", error);
-      // Continue execution even if post update fails
-    }
-    c.status(200);
-    return c.json({ success: true, newComment });
+  if (!(await PostModel.exists({ _id: postId }))) {
+    throw new HTTPException(404, { message: "Post not found" });
   }
-  catch (err) {
-    console.error("Error creating comment:", err);
-    c.status(500);
-    return c.json({ success: false, message: "Failed to create comment" });
-  }
+
+  const newComment = await CommentModel.create({ comment, user: c.get("userId") });
+  await PostModel.findByIdAndUpdate(postId, { $push: { comments: newComment._id } });
+
+  return c.json({ success: true, newComment });
 }
 
 export async function getCommentsByPost(c: Context) {
-  try {
-    const postId = c.req.param("id");
-    
-    if (!postId) {
-      c.status(400);
-      return c.json({ success: false, message: "Post ID is required" });
-    }
-    
-    // Find the post and populate its comments
-    const post = await PostModel.findById(postId)
-      .populate({
-        path: "comments",
-        populate: {
-          path: "user",
-          select: "username avatar"
-        }
-      })
-      .exec();
-    
-    if (!post) {
-      c.status(404);
-      return c.json({ success: false, message: "Post not found" });
-    }
-    
-    return c.json({
-      success: true,
-      comments: post.comments || []
-    });
-  }
-  catch (err) {
-    console.error("Error fetching comments:", err);
-    c.status(500);
-    return c.json({ success: false, message: "Failed to fetch comments" });
-  }
+  const comments = await findPostComments(c.req.param("id"), 1);
+  return c.json({ success: true, comments });
 }

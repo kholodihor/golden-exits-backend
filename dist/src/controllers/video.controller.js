@@ -1,75 +1,61 @@
+import { HTTPException } from "hono/http-exception";
 import VideoModel from "../models/video.model.js";
-import { createVideoSchema } from "../schema/index.js";
+import { createVideoSchema, updateVideoSchema } from "../schema/index.js";
+import { toggleLikeUpdate } from "../utils/likes.js";
+import { assertOwner } from "../utils/ownership.js";
+import { PUBLIC_USER_FIELDS } from "../utils/selects.js";
+async function findVideoOr404(videoId) {
+    const video = await VideoModel.findById(videoId);
+    if (!video) {
+        throw new HTTPException(404, { message: "Video not found" });
+    }
+    return video;
+}
 export async function uploadVideo(c) {
-    const data = await c.req.json();
-    try {
-        const video = createVideoSchema.parse(data);
-        const newVideo = new VideoModel(video);
-        await newVideo.save();
-        return c.json(newVideo);
-    }
-    catch (err) {
-        console.log(err);
-        c.status(500);
-        throw new Error("Failed to create post");
-    }
+    const data = createVideoSchema.parse(await c.req.json());
+    const newVideo = await VideoModel.create({ ...data, user: c.get("userId") });
+    return c.json(newVideo);
 }
 export async function getVideos(c) {
-    try {
-        const videos = await VideoModel.find().populate("user").exec();
-        return c.json(videos);
+    const videos = await VideoModel.find()
+        .populate("user", PUBLIC_USER_FIELDS)
+        .select("-__v")
+        .lean();
+    return c.json(videos);
+}
+export async function getVideoById(c) {
+    const video = await VideoModel.findById(c.req.param("id"))
+        .populate("user", PUBLIC_USER_FIELDS)
+        .lean();
+    if (!video) {
+        throw new HTTPException(404, { message: "Video not found" });
     }
-    catch (err) {
-        console.log(err);
-        c.status(500);
-        throw new Error("Failed to get videos");
-    }
+    return c.json({ success: true, video });
 }
 export async function updateViews(c) {
-    try {
-        const { views } = await c.req.json();
-        const videoId = c.req.param("id");
-        await VideoModel.updateOne({
-            _id: videoId,
-        }, {
-            views,
-        });
-        c.status(200);
-        return c.json({ success: true });
+    const video = await VideoModel.findByIdAndUpdate(c.req.param("id"), { $inc: { views: 1 } }, { new: true });
+    if (!video) {
+        throw new HTTPException(404, { message: "Video not found" });
     }
-    catch (err) {
-        console.log(err);
-        c.status(500);
-        throw new Error("Failed to update views");
-    }
+    return c.json({ success: true, views: video.views });
+}
+export async function updateVideo(c) {
+    const videoId = c.req.param("id");
+    const data = updateVideoSchema.parse(await c.req.json());
+    assertOwner(await findVideoOr404(videoId), c.get("userId"));
+    const video = await VideoModel.findByIdAndUpdate(videoId, { $set: data }, { new: true });
+    return c.json({ success: true, video });
+}
+export async function deleteVideo(c) {
+    const video = await findVideoOr404(c.req.param("id"));
+    assertOwner(video, c.get("userId"));
+    await video.deleteOne();
+    return c.json({ success: true, message: "Video deleted successfully" });
 }
 export async function likeVideo(c) {
-    try {
-        const videoId = c.req.param("id");
-        const { userId } = await c.req.json();
-        const video = await VideoModel.findById(videoId);
-        if (video) {
-            const isLiked = video.likes.get(userId);
-            if (isLiked) {
-                video.likes.delete(userId);
-            }
-            else {
-                video.likes.set(userId, true);
-            }
-            await VideoModel.findByIdAndUpdate({
-                _id: videoId,
-            }, { likes: video.likes }, { new: true });
-            c.status(200);
-            return c.json({ success: true });
-        }
-        else {
-            c.status(404);
-            return c.json({ message: "Video not found", success: false });
-        }
-    }
-    catch (err) {
-        console.log(err);
-        c.status(500);
-        throw new Error("Failed to update likes");
-    }
+    const videoId = c.req.param("id");
+    const video = await findVideoOr404(videoId);
+    const { liked, update } = toggleLikeUpdate(video.likes, c.get("userId"));
+    const updatedVideo = await VideoModel.findByIdAndUpdate(videoId, update, { new: true });
+    return c.json({ success: true, liked, likesCount: updatedVideo?.likes?.size ?? 0 });
 }
