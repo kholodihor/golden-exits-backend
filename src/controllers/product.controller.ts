@@ -1,44 +1,25 @@
 import type { Context } from "hono";
 
+import { HTTPException } from "hono/http-exception";
+
 import ProductModel from "../models/product.model";
 import { createProductSchema } from "../schema/index";
 
 export async function createProduct(c: Context) {
-  const data = await c.req.json();
-  const product = createProductSchema.parse(data);
-  try {
-    const newProduct = new ProductModel(product);
-    await newProduct.save();
-    return c.json(newProduct);
-  }
-  catch (err) {
-    console.log(err);
-    c.status(500);
-    throw new Error("Failed to create product");
-  }
+  const product = createProductSchema.parse(await c.req.json());
+  const newProduct = await ProductModel.create(product);
+  return c.json(newProduct);
 }
 
 export async function getProduct(c: Context) {
-  try {
-    const productId = await c.req.param("id");
-    const product = await ProductModel.findById(productId);
-    return c.json(product);
+  const product = await ProductModel.findById(c.req.param("id"));
+  if (!product) {
+    throw new HTTPException(404, { message: "Product not found" });
   }
-  catch (err) {
-    console.log(err);
-    c.status(404);
-    throw new Error("Product not found");
-  }
+  return c.json(product);
 }
 
 export async function getAllProducts(c: Context) {
-  try {
-    const products = await ProductModel.find();
-    return c.json(products);
-  }
-  catch (err) {
-    console.log(err);
-    c.status(404);
-    throw new Error("Products not found");
-  }
+  const products = await ProductModel.find();
+  return c.json(products);
 }

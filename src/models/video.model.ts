@@ -4,7 +4,7 @@ export interface IVideo {
   title: string;
   url: string;
   genre: string;
-  likes: any;
+  likes: Map<string, boolean>;
   views: number;
   user: string;
 }

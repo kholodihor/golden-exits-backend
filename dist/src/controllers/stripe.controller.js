@@ -1,23 +1,13 @@
-import dotenv from "dotenv";
-import stripe from "stripe";
-dotenv.config();
-const KEY = process.env.STRIPE_KEY || "";
+import Stripe from "stripe";
+import { requireEnv } from "../config/env.js";
+import { paymentSchema } from "../schema/index.js";
+let stripe;
+function getStripe() {
+    stripe ??= new Stripe(requireEnv("STRIPE_KEY"), { apiVersion: "2022-08-01" });
+    return stripe;
+}
 export async function createPayment(c) {
-    const data = await c.req.json();
-    // @ts-expect-error - Stripe types don't match exactly with our implementation but it works correctly
-    stripe(KEY).charges.create({
-        source: data.tokenId,
-        amount: data.amount,
-        currency: "usd",
-    }, (stripeErr, stripeRes) => {
-        if (stripeErr) {
-            console.log(stripeErr);
-            c.status(500);
-            throw new Error(stripeErr);
-        }
-        else {
-            c.status(200);
-            throw new Error(stripeRes);
-        }
-    });
+    const { tokenId, amount } = paymentSchema.parse(await c.req.json());
+    const charge = await getStripe().charges.create({ source: tokenId, amount, currency: "usd" });
+    return c.json(charge);
 }

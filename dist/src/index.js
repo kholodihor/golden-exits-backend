@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server";
+import process from "node:process";
 import app from "./app.js";
-const port = Number.parseInt(process.env.PORT) || 8080;
+const port = Number(process.env.PORT) || 8080;
 const host = "0.0.0.0";
 console.log(`Server is running on http://${host}:${port}`);
 serve({

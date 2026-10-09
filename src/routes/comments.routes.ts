@@ -4,12 +4,5 @@ import { CommentController } from "../controllers/index";
 import { checkAuth } from "../middleware/checkAuth";
 
 export const commentsRoutes = new Hono()
-  .post(
-    "/comments/:id",
-    checkAuth,
-    CommentController.createComment
-  )
-  .get(
-    "/comments/:id",
-    CommentController.getCommentsByPost
-  );
+  .post("/comments/:id", checkAuth, CommentController.createComment)
+  .get("/comments/:id", CommentController.getCommentsByPost);
