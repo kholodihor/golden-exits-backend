@@ -28,8 +28,10 @@ export async function createComment(c: Context) {
     throw new HTTPException(404, { message: "Post not found" });
   }
 
-  const newComment = await CommentModel.create({ comment, user: c.get("userId") });
-  await PostModel.findByIdAndUpdate(postId, { $push: { comments: newComment._id } });
+  const created = await CommentModel.create({ comment, user: c.get("userId") });
+  await PostModel.findByIdAndUpdate(postId, { $push: { comments: created._id } });
+  // Populate the author so clients can render the new comment the same way as fetched ones.
+  const newComment = await created.populate("user", PUBLIC_USER_FIELDS);
 
   return c.json({ success: true, newComment });
 }

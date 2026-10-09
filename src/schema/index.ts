@@ -46,9 +46,17 @@ export const createProductSchema = z.object({
   price: z.number(),
 });
 
+// The client sends what it wants to buy; the server prices it. Never trust a client amount.
 export const paymentSchema = z.object({
-  tokenId: z.string(),
-  amount: z.number().int().positive(),
+  tokenId: z.string().min(1),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        quantity: z.number().int().positive().max(100),
+      }),
+    )
+    .min(1),
 });
 
 export const uploadImageSchema = z.object({ image: z.string().min(1) });
