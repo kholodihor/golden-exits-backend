@@ -11,7 +11,7 @@ async function authResponse(c: Context, user: InstanceType<typeof UserModel>, me
   const token = await genToken(user._id.toString());
   return c.json({
     success: true,
-    data: { _id: user._id, username: user.username, email: user.email },
+    data: { _id: user._id, username: user.username, email: user.email, avatarUrl: user.avatarUrl },
     token,
     message,
   });
